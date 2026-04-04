@@ -19,7 +19,14 @@ fig = px.scatter(df,
 
 fig.show()
 
-# --- SECOND VISUALIZATION: US Choropleth Map ---
+# --- SECOND VISUALIZATION USING AI: US Choropleth Map ---
+# Prompt Inputted: import plotly.express as px
+# df = px.data.gapminder()
+#fig = px.choropleth(df, locations="iso_alpha", color="lifeExp", hover_name="country", animation_frame="year", range_color=[20,80])
+#fig.show(). 
+# Can you make a similar graph using my tornado date with the United States and frequency of tornadoes?
+#This Code worked on the first attempt, I did not do any modifications to the code provided by the AI.
+
 # 1. Group the data by Year ('yr') and State ('st') and count the number of tornadoes
 freq_df = df.groupby(['yr', 'st']).size().reset_index(name='Tornado Frequency')
 # 2. Create the animated choropleth map
@@ -36,3 +43,4 @@ fig2 = px.choropleth(
 )
 # Show the new map
 fig2.show()
+
