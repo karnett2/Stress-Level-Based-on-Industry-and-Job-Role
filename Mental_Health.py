@@ -41,7 +41,7 @@ def apply_uniform_font(fig):
     return fig
 
 def create_side_layout(side_id, title_text, color):
-    return html.Div(style={'flex': '1', 'display': 'flex', 'flexDirection': 'column', 'minWidth': '300px', 'overflowY': 'auto', 'padding': '5px'}, children=[
+    return html.Div(style={'flex': '1', 'display': 'flex', 'flexDirection': 'column', 'minWidth': '400px', 'padding': '5px'}, children=[
         html.Div(style={**CARD_STYLE, 'marginBottom': '5px'}, children=[
             html.H3(title_text, style={'textAlign': 'center', 'color': color, 'margin': '5px 0', 'fontSize': '18px'}),
             html.H4(id=f'selection-info-{side_id}', style={'textAlign': 'center', 'color': '#34495e', 'margin': '2px', 'fontSize': '14px'}),
@@ -99,9 +99,11 @@ app.layout = html.Div(
         ]),
 
         # ── Row 2: Split Dashboard Layout ──
-        html.Div(style={'display': 'flex', 'flexDirection': 'row', 'flex': '1', 'minHeight': '0'}, children=[
-            create_side_layout('m', '👨 Male Workforce Data', '#2980b9'),
-            create_side_layout('f', '👩 Female Workforce Data', '#e84393'),
+        html.Div(style={'display': 'flex', 'flexDirection': 'row', 'flex': '1', 'minHeight': '0', 'overflowX': 'auto', 'overflowY': 'auto', 'gap': '15px'}, children=[
+            create_side_layout('nb', 'Non-binary Workforce', '#9b59b6'),
+            create_side_layout('f', 'Female Workforce', '#e84393'),
+            create_side_layout('m', 'Male Workforce', '#2980b9'),
+            create_side_layout('pnts', 'Undisclosed Gender Workforce', '#f39c12')
         ])
     ]
 )
@@ -131,13 +133,15 @@ def update_loc_buttons(n_a, n_r, n_h, n_o, n_reset, current_loc):
 
 # Callback 2: Resetting Chart Clicks for Both Sides
 @app.callback(
-    [Output('industry-bar-m', 'clickData'), Output('job-role-bar-m', 'clickData'),
-     Output('industry-bar-f', 'clickData'), Output('job-role-bar-f', 'clickData')],
+    [Output('industry-bar-nb', 'clickData'), Output('job-role-bar-nb', 'clickData'),
+     Output('industry-bar-f', 'clickData'), Output('job-role-bar-f', 'clickData'),
+     Output('industry-bar-m', 'clickData'), Output('job-role-bar-m', 'clickData'),
+     Output('industry-bar-pnts', 'clickData'), Output('job-role-bar-pnts', 'clickData')],
     [Input('reset-btn', 'n_clicks')],
     prevent_initial_call=True
 )
 def reset_clicks(n):
-    return None, None, None, None
+    return (None,) * 8
 
 # Generative main Callback for Each Side independently
 def register_side_callback(side_id, gender):
@@ -235,7 +239,7 @@ def register_side_callback(side_id, gender):
         # 7. Hours
         avg_hours = filtered_df['Hours_Worked_Per_Week'].mean()
         fig_hours = go.Figure(go.Indicator(
-            mode="number", value=avg_hours, number={'valueformat': '.1f', 'suffix': ' h', 'font': {'size': 28}}, title={'text': "Avg Hours", 'font': {'size': 14}}
+            mode="number", value=avg_hours, number={'valueformat': '.1f', 'suffix': ' h', 'font': {'size': 28}}, title={'text': "Average Weekly Hours", 'font': {'size': 14}}
         ))
         fig_hours = apply_uniform_font(fig_hours)
         fig_hours.update_layout(margin=dict(t=25, l=15, r=15, b=0))
@@ -266,11 +270,12 @@ def register_side_callback(side_id, gender):
         mh_counts['Spectrum'] = 'Ratio'
         mh_counts['Label'] = mh_counts['Percentage'].apply(lambda x: f"{x:.1f}%" if x > 2 else "")
         mh_color_map = {'Depression': '#8e44ad', 'Anxiety': '#8b4513', 'Burnout': '#bdc3c7', 'None': '#3498db'}
-        fig_mh = px.bar(mh_counts, x='Percentage', y='Spectrum', color='Condition', orientation='h', barmode='stack', text='Label', color_discrete_map=mh_color_map)
+        fig_mh = px.bar(mh_counts, x='Spectrum', y='Percentage', color='Condition', orientation='v', barmode='stack', text='Label', color_discrete_map=mh_color_map)
         fig_mh = apply_uniform_font(fig_mh)
-        fig_mh.update_xaxes(title="")
-        fig_mh.update_yaxes(showticklabels=False, title="")
-        fig_mh.update_layout(margin=dict(t=15, l=10, r=10, b=55), showlegend=True, legend=dict(orientation="h", yanchor="top", y=-0.35, xanchor="center", x=0.5, title=""))
+        fig_mh.update_traces(textangle=0, cliponaxis=False)  # ← add this line
+        fig_mh.update_xaxes(showticklabels=False, title="")
+        fig_mh.update_yaxes(title="")
+        fig_mh.update_layout(margin=dict(t=15, l=0, r=130, b=15), showlegend=True, legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.25, traceorder="reversed", title="", bgcolor="rgba(0,0,0,0)"))
 
         # 11. Work Life Balance
         avg_wlb = filtered_df['Work_Life_Balance_Rating'].mean() if not filtered_df.empty else 0
@@ -283,8 +288,10 @@ def register_side_callback(side_id, gender):
         return (fig_ind, job_role_style, fig_role, selection_text, fig_stress, fig_hours, fig_sleep, fig_support, fig_mh, fig_wlb)
 
 # Register independent side callbacks
-register_side_callback('m', 'Male')
+register_side_callback('nb', 'Non-binary')
 register_side_callback('f', 'Female')
+register_side_callback('m', 'Male')
+register_side_callback('pnts', 'Prefer not to say')
 
 if __name__ == '__main__':
     print("Starting dashboard... Open http://127.0.0.1:8051/ in your browser.")
